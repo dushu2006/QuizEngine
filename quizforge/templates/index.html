@@ -1,0 +1,103 @@
+<!doctype html>
+<html lang="en" data-theme="{{ initial.settings.theme }}">
+<head>
+  <meta charset="utf-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="theme-color" content="#f5f6f3">
+  <meta name="description" content="QuizEngine — AI Computer-Use Agent. Local interface for authorized practice and UI testing.">
+  <title>QuizEngine — AI Computer-Use Agent</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='quizforge.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='quizengine-ui.css') }}">
+</head>
+<body class="{{ 'theme-dark' if initial.settings.theme == 'dark' else '' }}">
+  <div class="shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="QuizEngine home">
+        <span class="brand-mark" aria-hidden="true">Q</span>
+        <span><strong>QuizEngine</strong><small>LOCAL TEST ENVIRONMENT</small></span>
+      </a>
+      <nav class="top-actions" aria-label="Main navigation">
+        <a class="quiet-link" href="/variants">Layout gallery <span class="count-pill">{{ variants|length }}</span></a>
+        <button id="restart-button" class="button button-quiet" type="button" title="Restart this quiz">Restart</button>
+      </nav>
+    </header>
+
+    <main>
+      <section class="intro-row">
+        <div>
+          <div class="eyebrow"><span class="live-dot"></span> PRIVATE · RUNS IN YOUR BROWSER</div>
+          <h1>A little practice.<br><span>Many ways to see it.</span></h1>
+          <p class="lede">A local quiz playground built to exercise real perception across different layouts, themes, and screen conditions.</p>
+        </div>
+        <aside class="intro-note">
+          <span class="note-icon" aria-hidden="true">⌁</span>
+          <p><strong>No cloud. No account.</strong><br>Your answers and settings stay in this local app.</p>
+        </aside>
+      </section>
+
+      <section class="workbench" aria-label="Quiz controls">
+        <div class="workbench-heading">
+          <div><span class="section-kicker">01 / SET THE SCENE</span><h2>Display controls</h2></div>
+          <a href="/variants" class="text-link">Explore all layouts <span aria-hidden="true">↗</span></a>
+        </div>
+        <div class="control-grid">
+          <label class="control-field">
+            <span class="field-label">LAYOUT VARIANT</span>
+            <select id="variant-select" aria-label="Layout variant">
+              {% for item in variants %}<option value="{{ item.key }}">{{ item.label }}</option>{% endfor %}
+            </select>
+          </label>
+          <fieldset class="control-field segmented-field">
+            <legend class="field-label">APPEARANCE</legend>
+            <div class="segmented" id="theme-control">
+              <button type="button" data-theme-choice="light" class="seg-button" aria-pressed="false">☼ <span>Light</span></button>
+              <button type="button" data-theme-choice="dark" class="seg-button" aria-pressed="false">◐ <span>Dark</span></button>
+            </div>
+          </fieldset>
+          <fieldset class="control-field segmented-field">
+            <legend class="field-label">ZOOM</legend>
+            <div class="segmented" id="zoom-control">
+              <button type="button" data-zoom="1" class="seg-button" aria-pressed="false">100%</button>
+              <button type="button" data-zoom="1.25" class="seg-button" aria-pressed="false">125%</button>
+              <button type="button" data-zoom="1.5" class="seg-button" aria-pressed="false">150%</button>
+              <button type="button" data-zoom="2" class="seg-button" aria-pressed="false">200%</button>
+            </div>
+          </fieldset>
+        </div>
+        <details class="chaos-panel">
+          <summary><span class="chaos-symbol">✳</span><span><strong>Chaos lab</strong><small>Optional screen conditions for testing</small></span><span class="summary-chevron">⌄</span></summary>
+          <div class="chaos-options">
+            <label><input type="checkbox" value="popup"> <span><b>Modal notice</b><small>A dismissible panel over the quiz</small></span></label>
+            <label><input type="checkbox" value="toast"> <span><b>Toast notice</b><small>A non-blocking saved message</small></span></label>
+            <label><input type="checkbox" value="layout_shift"> <span><b>Layout shift</b><small>Content moves after the first paint</small></span></label>
+            <label><input type="checkbox" value="low_contrast"> <span><b>Low contrast</b><small>Washed-out text and outlines</small></span></label>
+            <label><input type="checkbox" value="delay"> <span><b>Slow response</b><small>Delays the next screen response</small></span></label>
+            <label><input type="checkbox" value="reorder"> <span><b>Reorder choices</b><small>Permutes choices while preserving the key</small></span></label>
+            <label><input type="checkbox" value="stale"> <span><b>Stale frame</b><small>Simulates a temporarily unchanged screen</small></span></label>
+          </div>
+          <div class="chaos-footer"><span id="chaos-status">Conditions are off</span><button id="apply-chaos" class="button button-small" type="button">Apply conditions</button></div>
+        </details>
+      </section>
+
+      <section id="quiz-frame" class="quiz-frame" aria-live="polite">
+        <div class="quiz-meta">
+          <div class="progress-wrap"><div class="progress-copy"><span id="progress-label">QUESTION 01</span><span id="progress-fraction">1 / 12</span></div><div class="progress-track"><div id="progress-fill" class="progress-fill"></div></div></div>
+          <span class="variant-chip" id="variant-chip">radio_vertical</span>
+        </div>
+        <div id="quiz-content"></div>
+      </section>
+
+      <section class="below-row">
+        <div class="privacy-footnote"><span class="lock-icon" aria-hidden="true">▣</span><span>Practice data stays local to this instance. QuizEngine is intended for authorized testing and learning.</span></div>
+        <a class="export-link" href="/api/answer-key?format=csv" download>Export answer key <span aria-hidden="true">↓</span></a>
+      </section>
+    </main>
+    <footer><span>QUIZENGINE <span class="footer-dot">·</span> LOCAL BY DESIGN</span><span>Fixture parity for QuizEngine <span class="footer-dot">·</span> <a href="/health">health check</a></span></footer>
+  </div>
+
+  <div id="toast" class="toast" role="status" aria-live="polite"></div>
+  <script id="initial-state" type="application/json">{{ initial|tojson }}</script>
+  <script src="{{ url_for('static', filename='quizforge.js') }}" defer></script>
+</body>
+</html>
