@@ -1,0 +1,231 @@
+# QuizEngine default configuration (PRD section 12).
+#
+# Every value below is the documented default.  Anything omitted falls back to
+# these.  Invalid config refuses to run with field-level errors (NFR-17.4).
+#
+# Two keys are deliberately NOT configurable:
+#   * run.attest_required  -- pinned true (FR-7.14.1); setting it false is an error
+#   * safety.<enabled>     -- does not exist (FR-7.14.5); the gatekeeper is a hard
+#                             pipeline stage and can only be removed by removing code.
+
+config_schema_version: 1
+
+run:
+  attest_required: true          # cannot be false
+  attestation: null              # supplied via --attest "..."; recorded in the run report
+  resume: false
+  run_id: null                   # null -> generated (utc timestamp + random suffix)
+  platform_profile: generic
+  deterministic: false           # NFR-17.3: seeded RNG, fixed jitter/timing
+  seed: 1234
+  dev_mode: true                 # illegal FSM transitions raise (prod: halt safely)
+  strict_transitions: true
+  refuse_unsupported_question_types: true
+
+capture:
+  backend: mss                   # mss | synthetic | replay
+  monitor: 0
+  region: null                   # [x, y, w, h] or null for the whole monitor
+  max_frame_age_ms: 750          # FR-7.1.5 frame freshness contract
+  retries: 3                     # FR-7.1.3
+  retry_backoff_ms: 250
+  blank_std_threshold: 2.0       # FR-7.1.2 uniform-blank detector
+  dimension_tolerance_px: 8
+  ring_buffer_frames: 20         # FR-7.1.7 / FR-15.2
+  ring_buffer_memory_mb: 200
+  zoom_crop_scale: 2.0           # FR-7.1.6
+  zoom_interpolation: bicubic
+  fixture_dir: null              # required when backend is synthetic|replay
+  staleness_check: true
+  lock_screen_signatures:
+    - "Press Ctrl+Alt+Del"
+    - "Sign in to Windows"
+    - "Lock screen"
+    - "Screen locked"
+    - "screensaver"
+
+perception:
+  ocr_engine: tesseract          # tesseract | easyocr | annotation | none
+  ocr_fallback_engine: annotation
+  ocr_lang: eng
+  min_text_confidence: 0.45
+  tier1_budget_ms: 500           # NFR: p95 < 300ms, hard limit 500ms
+  tier2_trigger: per_question    # per_question | on_ambiguity | never
+  tier2_budget_ms: 8000          # NFR: Tier-2 p95 < 4s (model dependent)
+  tier2_schema_retries: 2        # FR-7.2.6
+  ambiguity_option_count_mismatch: true
+  ambiguity_low_ocr_confidence: 0.6
+  preprocess:                    # FR-7.2.2 MANDATORY sequence
+    upscale_factor: 2.0
+    grayscale: true
+    denoise: true
+    denoise_d: 5
+    denoise_sigma: 25.0
+    adaptive_threshold: true
+    threshold_auto_select: true  # Otsu vs Sauvola by contrast score
+    threshold_block_size: 15
+    threshold_c: 8
+    deskew: true
+    deskew_max_degrees: 5.0
+    allow_raw_ocr: false         # raw input to OCR is forbidden
+  font_size_clusters: 4
+  column_gap_multiplier: 1.6
+  whitespace_band_min_ratio: 0.01
+  option_row_padding_ratio: 0.35 # FR-7.2.4 hit area, not just the text
+  option_min_height_px: 12
+  reconciliation_tolerance_iou: 0.5
+  reconciliation_confidence_penalty: 0.12
+
+extraction:
+  min_options: 2
+  max_options: 6                 # section 3.1: single-choice 2-6 options
+  question_text_min_chars: 5
+  question_text_max_chars: 1000
+  min_ocr_confidence: 0.60
+  min_confident_text_fraction: 0.80
+  require_distinct_options: true
+  retries: 2
+  math_vlm_confidence_floor: 0.7 # FR-7.3.4
+
+confidence:
+  high_conf: 0.85
+  low_conf: 0.60
+  uncertainty_policy: verify_again   # act | verify_again | pause_human (FR-7.5.2)
+  allow_low_conf_act: false          # below low_conf, pause-for-human is MANDATORY (L7)
+  verify_again_target: 0.85
+  weights:
+    ocr: 0.25
+    perception_agreement: 0.25
+    solver: 0.50
+    penalty_reconciliation: 0.12
+    penalty_overlay: 0.20
+    penalty_low_ocr: 0.15
+
+solver:
+  strategy_chain: [local_exact, local_fuzzy, local_rules, llm_reasoning, vlm_reanalysis]
+  accept_threshold: 0.85         # FR-7.4.1 first confident answer wins
+  fuzzy_threshold: 0.90
+  self_consistency: false        # FR-7.4.3 (P1)
+  self_consistency_threshold: 0.85
+  self_consistency_samples: 3
+  self_consistency_temperature: 0.7
+  call_timeout_s: 30             # FR-7.4.4
+  call_retries: 2
+  budget_s: 90                   # FR-7.4.4 total per question
+  vlm_on_flags: true
+  knowledge_base: knowledge/quizforge_bank.json
+
+action:
+  backend: pyautogui             # pyautogui | ahk | recording | null
+  input_profile:                 # FR-7.6.2 human-plausible bounds only
+    move_duration_range: [0.2, 0.4]
+    click_jitter_px: 3
+    typing_delay_range: [0.03, 0.09]
+    scroll_pause_range: [0.15, 0.35]
+  focus_check: true              # FR-7.6.4
+  window_title_match: null
+  rematch_min_confidence: 0.8    # FR-7.7.2
+  rematch_max_displacement_px: 30
+  rematch_scale_search: 0.20
+  failsafe_corner: true
+
+verification:                    # section 7.9 (MANDATORY component)
+  verify_timeout_ms: 1500        # FR-7.9.1
+  verify_recheck_ms: 3000
+  min_region_change_pct: 5.0
+  pixel_diff_threshold: 12
+  element_aware: true            # FR-7.9.2
+  max_post_action_frames: 6
+
+navigation:
+  keyboard_nav_enabled: false    # FR-7.8.1.d opt-in
+  keyboard_keys: [enter, right, down]
+  strategy_cascade: [next_button, auto_advance, scroll_reveal, keyboard]
+  auto_advance_wait_ms: 250      # FR-7.8.1.b wait for platform auto-advance
+  scroll_increment_px: 300
+  scroll_max_steps: 6
+  min_scroll_motion_pct: 1.0     # FR-7.8.2 scroll-exhausted threshold
+  end_state_required_frames: 2   # FR-7.8.4
+  end_state_keywords:
+    - "quiz complete"
+    - "submission complete"
+    - "your score"
+    - "results"
+    - "finished"
+    - "thank you"
+    - "correct answers"
+    - "you scored"
+    - "final score"
+
+budgets:                         # FR-7.10.2 (L3: enforced in the orchestrator)
+  max_questions: 50
+  max_runtime_min: 30
+  max_consecutive_failures: 3
+  max_cycles: 400
+  per_question_budget_s: 90      # section 15 hard limit
+
+safety:                          # section 7.14 -- cannot be disabled
+  restricted_scan_interval_s: 60
+  scan_at_startup: true
+  scan_processes: true
+  captcha_overlay_halts: true
+  continuous_check: true
+  halt_on_lock_screen: true
+  restricted_process_signatures:
+    - proctorio
+    - proctortrack
+    - proctoru
+    - respondus
+    - lockdownbrowser
+    - "lockdown browser"
+    - safeexam
+    - "safe exam browser"
+    - seb.exe
+    - proctor
+    - examsoft
+    - examplify
+    - honorlock
+    - vericant
+    - smowl
+    - "mettl secure"
+  restricted_window_signatures:
+    - "secure browser"
+    - lockdown
+    - proctoring
+    - "exam mode"
+    - kiosk
+
+telemetry:
+  trace_screenshots: true        # FR-7.13.3
+  decision_traces: true          # FR-7.13.4
+  log_level: INFO
+  json_logs: true
+  log_file: null                 # null -> runs/{run_id}/engine.log
+  metrics_export: file           # FR-7.13.2
+  metrics_file: metrics.json
+  metrics_flush_interval_s: 5
+  console: true                  # FR-7.13.5
+  retention_runs: 20             # FR-7.12.3
+  artifact_bundle_frames: 5      # FR-7.11.3
+
+models:                          # FR-6.2 provider abstraction; opt-in cloud (FR-16.1)
+  primary:
+    name: offline
+    kind: offline                # offline | openai_compat | ollama
+    model: deterministic-offline
+    base_url: null
+    api_key_env: ""              # FR-16.2: env var NAME only, never a key
+    timeout_s: 30
+    retries: 2
+    backoff_base_s: 0.5
+    max_tokens: 1024
+    send_images: true
+    min_crop_px: 64
+  fallback: null
+  tier2: null                    # null -> reuse primary
+
+paths:
+  runs_dir: runs
+  session_file: session.json
+  fixtures_dir: tests/fixtures/frames
+  knowledge_dir: knowledge

@@ -1,0 +1,86 @@
+[build-system]
+requires = ["setuptools>=68", "wheel"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "quizengine"
+version = "0.1.0"
+description = "QuizEngine - an authorized, target-agnostic, vision-driven desktop test agent with offline replay and explicit model providers."
+readme = "README.md"
+requires-python = ">=3.10"
+license = { text = "Apache-2.0" }
+authors = [{ name = "Ox Alpha" }]
+keywords = ["computer-use", "agent", "vision", "ocr", "automation", "closed-loop"]
+classifiers = [
+    "Development Status :: 3 - Alpha",
+    "Intended Audience :: Developers",
+    "Operating System :: Microsoft :: Windows",
+    "Operating System :: POSIX :: Linux",
+    "Programming Language :: Python :: 3.11",
+    "Topic :: Software Development :: Testing",
+]
+
+# Core runtime dependencies. Heavy / platform-specific perception and actuation
+# backends are OPTIONAL extras: the engine degrades gracefully (see
+# quizengine/capabilities.py) so the full loop, the replay harness and the whole
+# test-suite run on a headless machine with only these installed.
+dependencies = [
+    "numpy>=1.24",
+    "pydantic>=2.5",
+    "PyYAML>=6.0",
+    "pillow>=10.0",
+    "psutil>=5.9",
+]
+
+[project.optional-dependencies]
+# Real screen capture (FR-7.1.1). Without it, only the synthetic/replay backend
+# is available - which is what CI uses.
+screen = ["mss>=9.0"]
+# Tier-1 classical perception: preprocessing pipeline + OCR (FR-7.2.1/7.2.2).
+vision = ["opencv-python-headless>=4.8", "pytesseract>=0.3.10"]
+# Alternative OCR adapter (FR-7.2.1 swappability). Pulls torch - install manually.
+easyocr = ["easyocr>=1.7"]
+# Opt-in cloud/local model provider transport (FR-6.2).
+models = ["httpx>=0.26"]
+# Human-visible actuation backend (FR-7.6.1). Requires a display.
+actuate = ["pyautogui>=0.9.54"]
+# QuizForge mock platform (section 13).
+quizforge = ["flask>=3.0"]
+dev = [
+    "pytest>=7.4",
+    "pytest-cov>=4.1",
+    "mss>=9.0",
+    "opencv-python-headless>=4.8",
+    "pytesseract>=0.3.10",
+    "httpx>=0.26",
+    "flask>=3.0",
+]
+
+[project.scripts]
+quizengine = "quizengine.cli:main"
+quizengine-ui = "quizforge.cli:main"
+quizforge = "quizforge.cli:main"  # legacy compatibility alias
+
+[tool.setuptools.packages.find]
+include = ["quizengine*", "quizforge*"]
+
+[tool.setuptools.package-data]
+quizforge = ["templates/*.html", "static/*.css", "static/*.js"]
+
+[tool.pytest.ini_options]
+testpaths = ["tests"]
+addopts = "-q --strict-markers"
+markers = [
+    "integration: end-to-end replay-harness tests (still headless/deterministic)",
+    "slow: long-running tests (soak, large fixture sweeps)",
+    "requires_display: needs a real screen + actuator; skipped in CI",
+]
+filterwarnings = ["ignore::DeprecationWarning"]
+
+[tool.coverage.run]
+source = ["quizengine"]
+omit = ["quizengine/_vendor/*"]
+
+[tool.coverage.report]
+precision = 1
+show_missing = false

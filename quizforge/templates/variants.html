@@ -1,0 +1,39 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8"><meta name="viewport" content="width=device-width, initial-scale=1">
+  <meta name="color-scheme" content="light dark">
+  <meta name="description" content="QuizEngine UI layout gallery and fixture comparison.">
+  <title>QuizEngine — Layout Gallery</title>
+  <link rel="stylesheet" href="{{ url_for('static', filename='quizforge.css') }}">
+  <link rel="stylesheet" href="{{ url_for('static', filename='quizengine-ui.css') }}">
+</head>
+<body>
+  <div class="shell gallery-shell">
+    <header class="topbar">
+      <a class="brand" href="/" aria-label="QuizEngine home"><span class="brand-mark" aria-hidden="true">Q</span><span><strong>QuizEngine</strong><small>LOCAL TEST ENVIRONMENT</small></span></a>
+      <nav class="top-actions"><a class="quiet-link" href="/">← Back to quiz</a></nav>
+    </header>
+    <main>
+      <div class="gallery-heading"><div><div class="eyebrow"><span class="live-dot"></span> FIXTURE CATALOGUE</div><h1>One question.<br><span>Nineteen presentations.</span></h1><p class="lede">Every layout is shared with QuizEngine’s offline fixture set. Open a parity check to compare the served screen model against its perception annotation.</p></div><div class="gallery-stat"><strong>{{ variants|length }}</strong><span>LAYOUT VARIANTS</span></div></div>
+      <div class="gallery-toolbar"><span>LAYOUT VARIANT <b>{{ variants|length }} available</b></span><a class="button button-small" href="/api/variants" target="_blank" rel="noopener noreferrer">View JSON catalogue ↗</a></div>
+      <div class="variant-grid">
+      {% for item in variants %}
+        <article class="variant-card">
+          <div class="variant-preview preview-{{ item.style }} {{ 'preview-dark' if item.theme == 'dark' else '' }}">
+            <span class="preview-progress">1 OF 1</span><span class="preview-line line-long"></span><span class="preview-line line-short"></span>
+            <div class="preview-options cols-{{ item.columns }}">
+              <i></i><i></i><i></i><i></i>
+            </div>
+            <span class="preview-nav">{{ 'Submit' if item.final_submit else ('Auto' if item.auto_advance else 'Next') }} →</span>
+          </div>
+          <div class="variant-card-body"><div class="variant-topline"><span class="variant-index">{{ '%02d'|format(loop.index) }}</span><span class="variant-type">{{ item.style|replace('_',' ')|upper }}</span></div><h2>{{ item.label }}</h2><p>{{ item.description }}</p><div class="variant-tags"><span>{{ item.layout_type|replace('_',' ') }}</span><span>{{ item.columns }} col</span><span>{{ item.size[0] }}×{{ item.size[1] }}</span>{% if item.zoom != 1.0 %}<span>{{ (item.zoom * 100)|int }}% zoom</span>{% endif %}</div><a class="parity-link" href="/api/parity/{{ item.key }}" target="_blank" rel="noopener noreferrer">Check fixture parity <span>↗</span></a></div>
+        </article>
+      {% endfor %}
+      </div>
+      <section class="gallery-note"><strong>QuizEngine parity</strong><span>The card previews are illustrative. The API parity route compares the catalog’s screen model with a generated annotated scene for each variant.</span><a href="/api/answer-key?format=csv">Download answer key ↓</a></section>
+    </main>
+    <footer><span>QUIZENGINE <span class="footer-dot">·</span> LOCAL BY DESIGN</span><span><a href="/">Back to practice</a></span></footer>
+  </div>
+</body>
+</html>

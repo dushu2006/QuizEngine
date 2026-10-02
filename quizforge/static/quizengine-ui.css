@@ -1,0 +1,231 @@
+/* Interaction and responsive fixes layered over the existing visual system. */
+:where(button, a, select, input, summary):focus-visible {
+  outline: 3px solid rgba(116, 164, 74, .6);
+  outline-offset: 3px;
+}
+button:disabled,
+select:disabled,
+input:disabled {
+  cursor: not-allowed;
+}
+button:not(:disabled),
+a, select:not(:disabled),
+summary {
+  cursor: pointer;
+}
+
+/* Keep the navigation controls stable for every option style and breakpoint. */
+.quiz-actions {
+  display: grid;
+  grid-template-columns: minmax(88px, auto) minmax(0, 1fr) minmax(116px, auto);
+  gap: 12px;
+}
+.previous-button {
+  justify-self: start;
+  min-height: 40px;
+}
+.previous-placeholder {
+  min-width: 88px;
+}
+.action-hint,
+.auto-advance-state {
+  justify-self: center;
+  text-align: center;
+}
+#continue-button {
+  min-width: 116px;
+  min-height: 40px;
+}
+.quiz-frame[aria-busy="true"] #quiz-content {
+  cursor: progress;
+}
+.quiz-frame[data-navigation-state="TRANSITIONING"] .quiz-actions {
+  opacity: .78;
+}
+.option-button {
+  min-width: 0;
+  overflow-wrap: anywhere;
+  touch-action: manipulation;
+}
+
+/* The shell owns theme; all global controls remain legible in both themes. */
+body.theme-dark .workbench,
+body.theme-dark .intro-note,
+body.theme-dark .quiz-frame {
+  background-color: #242c26;
+  color: #e5e9e4;
+}
+body.theme-dark .chaos-panel {
+  border-color: #353e37;
+}
+body.theme-dark .chaos-panel summary,
+body.theme-dark .chaos-panel summary strong,
+body.theme-dark .chaos-footer,
+body.theme-dark .field-label,
+body.theme-dark .section-kicker,
+body.theme-dark .action-hint,
+body.theme-dark .auto-advance-state,
+body.theme-dark .privacy-footnote,
+body.theme-dark footer,
+body.theme-dark .quiet-link,
+body.theme-dark .text-link {
+  color: #b5c0b6;
+}
+body.theme-dark .chaos-options small {
+  color: #a5afa6;
+}
+body.theme-dark .chaos-panel,
+body.theme-dark .segmented,
+body.theme-dark .control-field select {
+  border-color: #3b463d;
+}
+body.theme-dark .segmented {
+  background: #1e2520;
+}
+body.theme-dark .seg-button {
+  color: #bac5bb;
+}
+body.theme-dark .seg-button.active {
+  background: #354338;
+  color: #e2eddb;
+}
+body.theme-dark .button,
+body.theme-dark .previous-button {
+  background: #29332b;
+  border-color: #485548;
+  color: #dce5db;
+}
+body.theme-dark .button:hover:not(:disabled),
+body.theme-dark .previous-button:hover:not(:disabled) {
+  background: #354338;
+}
+body.theme-dark .option-button.selected {
+  background: #354b31;
+  border-color: #8fbd67;
+  color: #eef7e8;
+}
+body.theme-dark .option-button.correct {
+  background: #2c402b !important;
+  color: #d9edca !important;
+}
+body.theme-dark .option-button.incorrect {
+  background: #49372e !important;
+  color: #f2d3bf !important;
+}
+body.theme-dark .result-actions .button,
+body.theme-dark .export-link,
+body.theme-dark .parity-link,
+body.theme-dark .gallery-note a {
+  color: #c7dda9;
+}
+body.theme-dark .result-score,
+body.theme-dark .gallery-note {
+  background: #202821;
+  border-color: #3d493c;
+  color: #d5e0d2;
+}
+
+/* Less UI chrome at small widths; the options retain natural flow and hit area. */
+@media (max-width: 850px) {
+  .control-grid {
+    grid-template-columns: minmax(0, 1fr) minmax(0, 1fr);
+  }
+  .control-field:first-child {
+    grid-column: 1 / -1;
+  }
+  .workbench-heading {
+    flex-wrap: wrap;
+    gap: 10px;
+  }
+  .matrix-link {
+    margin-left: 0;
+  }
+}
+@media (max-width: 620px) {
+  .shell,
+  .gallery-shell {
+    width: min(100% - 24px, 560px);
+  }
+  .topbar {
+    min-height: 66px;
+    height: auto;
+    gap: 10px;
+  }
+  .brand strong {
+    font-size: 14px;
+  }
+  .brand small {
+    letter-spacing: .1em;
+  }
+  .top-actions {
+    gap: 9px;
+  }
+  .quiet-link,
+  .button {
+    font-size: 10px;
+  }
+  .workbench-heading {
+    align-items: flex-start;
+  }
+  .control-grid {
+    grid-template-columns: minmax(0, 1fr);
+  }
+  .control-field:first-child {
+    grid-column: auto;
+  }
+  .segmented {
+    min-width: 0;
+  }
+  .seg-button {
+    min-width: 0;
+    padding-inline: 4px;
+  }
+  .quiz-actions {
+    grid-template-columns: minmax(68px, auto) minmax(0, 1fr) minmax(96px, auto);
+    gap: 6px;
+  }
+  .previous-placeholder {
+    min-width: 0;
+  }
+  .previous-button,
+  #continue-button {
+    min-width: 0;
+    padding: 10px 9px;
+    font-size: 10px;
+  }
+  .action-hint,
+  .auto-advance-state {
+    font-size: 9px;
+    overflow-wrap: anywhere;
+  }
+  .option-button {
+    min-height: 44px;
+  }
+  .result-actions {
+    flex-wrap: wrap;
+  }
+  footer {
+    padding-left: 0;
+    flex-wrap: wrap;
+    gap: 8px;
+  }
+}
+@media (max-width: 360px) {
+  .quiz-actions {
+    grid-template-columns: 1fr 1fr;
+  }
+  .action-hint,
+  .auto-advance-state {
+    grid-column: 1 / -1;
+    grid-row: 1;
+  }
+  .previous-button,
+  .previous-placeholder {
+    grid-column: 1;
+    grid-row: 2;
+  }
+  #continue-button {
+    grid-column: 2;
+    grid-row: 2;
+  }
+}
